@@ -139,6 +139,17 @@ Pushes to other branches return `Ignored branch: <branch>` without a Discord
 notification. Tags and events other than `push` are also ignored. Edit
 `ALLOWED_BRANCHES` in `worker.js` and redeploy to change the allowed branches.
 
+### Inspect a GitHub delivery
+
+1. Open the source repository's **Settings > Webhooks** and select this webhook.
+2. Under **Recent Deliveries**, open the delivery GUID for the event you are testing.
+3. Inspect its request headers and payload, then its response status and body.
+
+For a push delivery, check that `Content-Type` is `application/json`,
+`X-GitHub-Event` is `push`, and the payload's `ref` is `refs/heads/master` (or
+another branch included in `ALLOWED_BRANCHES`). Use the response body to decide
+what to check next:
+
 | Response | Check |
 | --- | --- |
 | `405 Method Not Allowed` | Send an HTTP POST request. |
@@ -147,8 +158,44 @@ notification. Tags and events other than `push` are also ignored. Edit
 | `400 Invalid JSON` | Set the GitHub webhook content type to `application/json`. |
 | `502 Discord error: <status>` | Check the Discord webhook URL, thread ID, and Discord's reported status. |
 
-GitHub does not automatically retry failed webhook deliveries. After fixing a
-failure, use **Recent Deliveries > Redeliver** to try it again.
+HTTP 200 with `Ignored branch: ...`, `Ignored ref`, or `Ignored event` means the
+Worker acknowledged and filtered the event. No Discord message is expected.
+A `ping` delivery returns `OK` and also does not send a Discord notification.
+
+### Watch Worker logs
+
+In Cloudflare, open **Workers & Pages**, select `discord-webhook`, and use its
+**Observability** view to inspect saved invocation records. For live output,
+open **Logs > Live**, or run this from the repository root:
+
+```sh
+npx wrangler tail
+```
+
+Start the live stream before redelivering an event, then correlate the delivery
+time with the Worker invocation. Live logs are not a historical query. The
+current configuration enables persisted invocation logs, but the Worker does not
+emit custom payload or branch-decision logs. Use GitHub's delivery details for
+the request payload and the Worker's response body.
+
+### Redeliver after a fix
+
+GitHub does not automatically retry failed webhook deliveries. Repository
+administrators can manually redeliver deliveries from the past three days:
+
+1. Apply the fix, deploying Worker code/configuration or updating runtime secrets as needed.
+2. Return to **Settings > Webhooks**, select the webhook, and open **Recent Deliveries**.
+3. Open the original delivery GUID and click **Redeliver**.
+4. Refresh the delivery details and check the new attempt's time, request, and response.
+
+This lets you test the original event again without creating another push. A
+matching push should return HTTP 200 with `Forwarded` and produce a Discord
+notification. Redelivering an already successful matching push sends another
+notification; this Worker does not deduplicate deliveries.
+
+If you changed GitHub's payload format, generate a fresh push as well and check
+its request to confirm that the body is JSON. Do not use a successful `ping` alone
+as evidence that Discord forwarding works.
 
 ## Automatic deployments from GitHub
 
@@ -170,5 +217,8 @@ Keep the configured Worker name and runtime secrets when connecting the reposito
 - [Cloudflare deployment settings](https://developers.cloudflare.com/workers/ci-cd/builds/configuration/).
 - [Wrangler deployment and secret commands](https://developers.cloudflare.com/workers/wrangler/commands/workers/).
 - [GitHub webhook setup](https://docs.github.com/en/webhooks/using-webhooks/creating-webhooks).
+- [Inspecting GitHub webhook deliveries](https://docs.github.com/en/webhooks/testing-and-troubleshooting-webhooks/viewing-webhook-deliveries).
 - [GitHub webhook redelivery](https://docs.github.com/en/webhooks/testing-and-troubleshooting-webhooks/redelivering-webhooks).
+- [Cloudflare live Worker logs](https://developers.cloudflare.com/workers/observability/logs/real-time-logs/).
+- [Cloudflare persisted Worker logs](https://developers.cloudflare.com/workers/observability/logs/workers-logs/).
 - [Discord webhook setup](https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks).
