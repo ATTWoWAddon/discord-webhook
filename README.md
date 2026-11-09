@@ -59,11 +59,56 @@ Replace the placeholders with your own values. Do not add `/github` yourself.
 
 ## 3. Configure the source GitHub webhook
 
+### Find the Payload URL
+
+The **Payload URL** is the public HTTPS endpoint that GitHub sends webhook POST
+requests to. For this project, it is the deployed Cloudflare Worker's URL.
+
+To find it in the Cloudflare dashboard:
+
+1. Open **Workers & Pages** and select the `discord-webhook` Worker.
+2. Open **Settings > Domains & Routes**.
+3. Copy the enabled `workers.dev` URL, or use a public URL configured for this Worker.
+
+For `workers.dev`, the address has this form:
+
+```text
+https://discord-webhook.<account-subdomain>.workers.dev/
+```
+
+`discord-webhook` comes from `name` in `wrangler.jsonc`. Replace
+`<account-subdomain>` with the actual Cloudflare account subdomain shown in the
+dashboard; it is independent of the GitHub organization name. For example, if
+the subdomain were `example-account`, the Payload URL would be:
+
+```text
+https://discord-webhook.example-account.workers.dev/
+```
+
+That is an example, not your account's actual address. Copy your deployed URL
+from the dashboard or a previous successful `npx wrangler deploy` output. If
+`workers.dev` is disabled, use the Worker's configured Custom Domain or an actual
+HTTPS URL matching its Route; a wildcard route pattern is not a complete URL.
+Use the production endpoint rather than a version preview URL.
+
+See [Cloudflare's public Worker URL settings](https://developers.cloudflare.com/workers/configuration/routing/workers-dev/).
+
+| Address | Purpose |
+| --- | --- |
+| The public Worker HTTPS URL | GitHub webhook's **Payload URL**. |
+| The Discord webhook URL | The Worker's `DISCORD_WEBHOOK_URL` runtime secret. |
+| The GitHub repository URL | The source repository whose webhook settings you configure. |
+
+Use the Worker's URL as shown. No `/github` suffix is needed here; the Worker
+adds that suffix only to the Discord URL when forwarding a notification.
+
+### Create the webhook
+
 In `ATTWoWAddon/AllTheThings`, open **Settings > Webhooks > Add webhook**:
 
 | Setting | Value |
 | --- | --- |
-| Payload URL | The deployed Worker's HTTPS URL. |
+| Payload URL | The public Worker URL described above. |
 | Content type | `application/json`. |
 | Secret | The same value as `GITHUB_WEBHOOK_SECRET`. |
 | Events | **Just the push event**. |
@@ -72,6 +117,10 @@ In `ATTWoWAddon/AllTheThings`, open **Settings > Webhooks > Add webhook**:
 Save the webhook after both Worker secrets are configured. GitHub sends a `ping`
 event, which should receive HTTP 200 with `OK`. This verifies the GitHub-to-Worker
 connection; test a matching push separately to verify Discord delivery.
+
+Opening the Payload URL in a browser sends a GET request, so this Worker returns
+`405 Method Not Allowed`. Check the webhook's **Recent Deliveries** page in GitHub
+to inspect the actual POST request and its response.
 
 ### Example: a second source repository
 
