@@ -73,6 +73,13 @@ Save the webhook after both Worker secrets are configured. GitHub sends a `ping`
 event, which should receive HTTP 200 with `OK`. This verifies the GitHub-to-Worker
 connection; test a matching push separately to verify Discord delivery.
 
+### Example: a second source repository
+
+To add `NORPG/AllTheThings` as a second source, create a webhook there using the
+same settings above. Use the same Worker URL and `GITHUB_WEBHOOK_SECRET`;
+accepted pushes go to the same Discord webhook. Its source branch must be in
+`ALLOWED_BRANCHES` (currently `master`).
+
 ## 4. Use and verify
 
 Push to `master` in the source repository, or redeliver an existing matching push
