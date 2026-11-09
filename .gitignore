@@ -1,0 +1,16 @@
+# Cloudflare Workers
+.wrangler/
+
+# Local secrets and environment variables
+.dev.vars*
+.env*
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Operating system files
+.DS_Store
+Thumbs.db
