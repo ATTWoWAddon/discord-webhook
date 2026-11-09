@@ -1,5 +1,5 @@
 {
-	"name": "misty-salad-70dc",
+	"name": "discord-webhook",
 	"main": "worker.js",
 	"compatibility_date": "2026-11-09",
 	"observability": {

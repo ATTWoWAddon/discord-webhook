@@ -19,10 +19,10 @@ npx wrangler login
 npx wrangler deploy
 ```
 
-Keep the existing Worker name, `misty-salad-70dc`, in `wrangler.jsonc` when updating
-that deployment. Use the Worker's HTTPS URL from the Wrangler deployment output
-or the Cloudflare dashboard as the GitHub webhook destination. No build step or
-project dependencies are required.
+Set `name` in `wrangler.jsonc` to `discord-webhook` to match the Cloudflare
+deployment target. Use the Worker's HTTPS URL from the Wrangler deployment
+output or the Cloudflare dashboard as the GitHub webhook destination. No build
+step or project dependencies are required.
 
 ## 2. Configure Discord and secrets
 
@@ -104,7 +104,7 @@ failure, use **Recent Deliveries > Redeliver** to try it again.
 ## Automatic deployments from GitHub
 
 To deploy this repository through Cloudflare Workers Builds, connect it to the
-existing Worker with these settings:
+`discord-webhook` Worker with these settings:
 
 | Setting | Value |
 | --- | --- |
@@ -114,7 +114,7 @@ existing Worker with these settings:
 | Build command | Empty. |
 | Deploy command | `npx wrangler deploy`. |
 
-Keep the existing Worker name and runtime secrets when connecting the repository.
+Keep the configured Worker name and runtime secrets when connecting the repository.
 
 ## References
 
